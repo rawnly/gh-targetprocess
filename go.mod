@@ -5,7 +5,7 @@ go 1.22.0
 toolchain go1.22.0
 
 require (
-	github.com/charmbracelet/huh v0.7.0
+	github.com/charmbracelet/huh v0.6.0
 	github.com/cli/go-gh v1.2.1
 	github.com/spf13/viper v1.20.1
 )
