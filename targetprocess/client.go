@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"text/template"
 )
 
@@ -62,17 +63,47 @@ func (a *Assignable) GetPRTitle() string {
 func (a *Assignable) GetPRBody(baseURL string) string {
 	var buf bytes.Buffer
 
-	tmpl, err := template.New("pr-body.tmpl").ParseFiles("pr-body.tmpl")
+	tmpl, err := template.New("pr-body.tmpl").Parse(`
+See: [[{{.ID}}] {{.Name}}]({{.URL}})
+
+{{ if .Description }}
+{{ .Description }}
+{{ end }}
+		`)
 	if err != nil {
+		fmt.Println(err.Error())
 		return ""
 	}
 
-	if err = tmpl.Execute(&buf, map[string]any{
-		"ID":          a.ID,
-		"Name":        a.Name,
-		"Description": a.Description,
-		"URL":         a.URL(),
-	}); err != nil {
+	description := a.Description
+
+	// Remove the <!--markdown--> comment from the description and cleanup
+	if description != nil {
+		tempDescription := strings.Replace(*description, "<!--markdown-->", "", 1)
+		rows := strings.Split(tempDescription, "\n\n")
+		for i, row := range rows {
+			rows[i] = fmt.Sprintf("> %s", row)
+		}
+
+		tempDescription = strings.Join(rows, "\n>\n")
+
+		description = &tempDescription
+	}
+
+	payload := struct {
+		ID          int
+		Name        string
+		URL         string
+		Description *string
+	}{
+		ID:          a.ID,
+		Name:        a.Name,
+		URL:         a.URL(),
+		Description: description,
+	}
+
+	if err = tmpl.Execute(&buf, payload); err != nil {
+		fmt.Println(err.Error())
 		return ""
 	}
 
@@ -97,8 +128,6 @@ func (c *Client) Get(path string, response any) error {
 	params.Add("access_token", c.apiKey)
 
 	req.URL.RawQuery = params.Encode()
-
-	fmt.Println(req.URL.String())
 
 	resp, err := c.client.Do(req)
 	if err != nil {

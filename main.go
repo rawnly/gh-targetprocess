@@ -74,6 +74,8 @@ func main() {
 		return
 	}
 
+	fmt.Println(assignable.GetPRBody(cfg.URL))
+
 	if _, _, err := gh.Exec("pr", "create", "--title", assignable.GetPRTitle(), "--body", assignable.GetPRBody(cfg.URL), "-w"); err != nil {
 		fmt.Println(err)
 		return
