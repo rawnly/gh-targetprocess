@@ -1,8 +1,8 @@
 module github.com/federicovitale-satispay/gh-targetprocess
 
-go 1.22.0
+go 1.23.0
 
-toolchain go1.22.0
+toolchain go1.24.1
 
 require (
 	github.com/charmbracelet/huh v0.6.0
