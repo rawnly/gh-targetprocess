@@ -2,6 +2,7 @@ package targetprocess
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 )
@@ -51,6 +52,43 @@ func New(baseURL string, apiKey string) *Client {
 	}
 }
 
+func (c *Client) GetAssignable(id string) (*Assignable, error) {
+	var assignable Assignable
+
+	path := fmt.Sprintf("/v1/assignable/%s", id)
+
+	if err := c.Get(path, &assignable); err != nil {
+		return nil, err
+	}
+
+	return &assignable, nil
+}
+
+func (c *Client) Test(path string) error {
+	req, err := http.NewRequest("GET", c.baseURL+path, nil)
+	if err != nil {
+		return err
+	}
+
+	params := req.URL.Query()
+	params.Add("access_token", c.apiKey)
+
+	req.URL.RawQuery = params.Encode()
+
+	resp, err := c.client.Do(req)
+	if err != nil {
+		return err
+	}
+
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return errors.New(resp.Status)
+	}
+
+	return nil
+}
+
 func (c *Client) Get(path string, response any) error {
 	req, err := http.NewRequest("GET", c.baseURL+path, nil)
 	if err != nil {
@@ -70,7 +108,7 @@ func (c *Client) Get(path string, response any) error {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("error: %s", resp.Status)
+		return errors.New(resp.Status)
 	}
 
 	if err := json.NewDecoder(resp.Body).Decode(response); err != nil {

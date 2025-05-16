@@ -4,13 +4,21 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 
 	"github.com/cli/go-gh"
+	"github.com/rawnly/gh-targetprocess/cmd/configure"
+	"github.com/rawnly/gh-targetprocess/cmd/view"
 	"github.com/rawnly/gh-targetprocess/internal"
 	"github.com/rawnly/gh-targetprocess/internal/utils"
 	"github.com/rawnly/gh-targetprocess/pkg/targetprocess"
 	"github.com/spf13/cobra"
 )
+
+func init() {
+	rootCmd.AddCommand(view.Cmd)
+	rootCmd.AddCommand(configure.Cmd)
+}
 
 var rootCmd = &cobra.Command{
 	Use:        "gh-targetprocess",
@@ -62,5 +70,7 @@ var rootCmd = &cobra.Command{
 
 func Execute(ctx context.Context) {
 	err := rootCmd.ExecuteContext(ctx)
-	cobra.CheckErr(err)
+	if err != nil {
+		os.Exit(1)
+	}
 }

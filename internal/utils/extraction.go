@@ -21,3 +21,24 @@ func ExtractIDFromURL(url string) *string {
 	}
 	return nil
 }
+
+// ExtractTicketID extracts the ticket ID from the current branch or a given URL.
+func ExtractTicketID(idOrURL *string) *string {
+	// we ignore the error the directory may not be a git repo
+	branch, _ := CurrentBranch()
+
+	var id *string
+	if branch != "" {
+		id = GetTicketIDFromBranch(branch)
+	}
+
+	if id == nil && idOrURL != nil {
+		id = ExtractIDFromURL(*idOrURL)
+
+		if id == nil {
+			id = idOrURL
+		}
+	}
+
+	return id
+}
