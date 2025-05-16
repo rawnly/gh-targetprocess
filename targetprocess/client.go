@@ -80,12 +80,12 @@ See: [[{{.ID}}] {{.Name}}]({{.URL}})
 	// Remove the <!--markdown--> comment from the description and cleanup
 	if description != nil {
 		tempDescription := strings.Replace(*description, "<!--markdown-->", "", 1)
-		rows := strings.Split(tempDescription, "\n\n")
-		for i, row := range rows {
-			rows[i] = fmt.Sprintf("> %s", row)
+		lines := strings.Split(tempDescription, "\n")
+		for i, line := range lines {
+			lines[i] = fmt.Sprintf("> %s", line)
 		}
 
-		tempDescription = strings.Join(rows, "\n>\n")
+		tempDescription = strings.Join(lines, "\n")
 
 		description = &tempDescription
 	}
