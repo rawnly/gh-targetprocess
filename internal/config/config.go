@@ -1,8 +1,11 @@
 package config
 
 import (
+	"os"
+
 	"github.com/charmbracelet/huh"
 	"github.com/spf13/viper"
+	"github.com/zalando/go-keyring"
 )
 
 type Config struct {
@@ -10,15 +13,28 @@ type Config struct {
 	Token string `json:"token"`
 }
 
+func getUserName() string {
+	return os.Getenv("USER")
+}
+
+const serviceName = "gh-targetprocess.access_token"
+
 func Load() (*Config, error) {
-	var C *Config
-	err := viper.Unmarshal(&C)
-	return C, err
+	url := viper.GetString("url")
+	token, err := keyring.Get(serviceName, getUserName())
+	if err != nil {
+		return nil, err
+	}
+
+	return &Config{URL: url, Token: token}, err
 }
 
 func (c *Config) Save() error {
+	if err := keyring.Set(serviceName, getUserName(), c.Token); err != nil {
+		return err
+	}
+
 	viper.Set("url", c.URL)
-	viper.Set("token", c.Token)
 	return viper.WriteConfig()
 }
 
