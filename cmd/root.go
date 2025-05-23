@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/cli/go-gh"
+	"github.com/cli/go-gh/v2"
 	"github.com/rawnly/gh-targetprocess/cmd/configure"
 	"github.com/rawnly/gh-targetprocess/cmd/view"
 	"github.com/rawnly/gh-targetprocess/internal"
@@ -18,6 +18,10 @@ import (
 func init() {
 	rootCmd.AddCommand(view.Cmd)
 	rootCmd.AddCommand(configure.Cmd)
+
+	rootCmd.Flags().BoolP("draft", "d", false, "mark pr as draft")
+	rootCmd.Flags().StringP("label", "l", "", "label to add to the PR")
+	rootCmd.Flags().StringP("assign", "a", "", "assign PR")
 }
 
 var rootCmd = &cobra.Command{
@@ -60,7 +64,42 @@ var rootCmd = &cobra.Command{
 			return err
 		}
 
-		if _, _, err := gh.Exec("pr", "create", "--title", assignable.GetPRTitle(), "--body", assignable.GetPRBody(cfg.URL), "-w"); err != nil {
+		title := assignable.GetPRTitle()
+		body := assignable.GetPRBody(cfg.URL)
+		flags := cmd.Flags()
+
+		assignee, err := flags.GetString("assign")
+		if err != nil {
+			return err
+		}
+
+		draft, err := flags.GetBool("draft")
+		if err != nil {
+			return err
+		}
+
+		label, err := flags.GetString("label")
+		if err != nil {
+			return err
+		}
+
+		prArgs := []string{"pr", "create", "--title", title, "--body", body, "-w"}
+
+		if draft {
+			prArgs = append(prArgs, "--draft")
+		}
+
+		if label != "" {
+			prArgs = append(prArgs, "--label", label)
+		}
+
+		if assignee == "" {
+			prArgs = append(prArgs, "--assigne", "@me")
+		} else {
+			prArgs = append(prArgs, "--assigne", assignee)
+		}
+
+		if _, _, err := gh.Exec(prArgs...); err != nil {
 			return err
 		}
 
