@@ -2,6 +2,7 @@ package view
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/charmbracelet/glamour"
 	"github.com/cli/browser"
@@ -47,7 +48,15 @@ var Cmd = &cobra.Command{
 			return browser.OpenURL(url)
 		}
 
-		glamour.Render(assignable.GetPRBody(config.URL), "")
+		r, err := glamour.NewTermRenderer(
+			glamour.WithAutoStyle(),
+		)
+		cobra.CheckErr(err)
+
+		s, err := r.Render(assignable.GetPRBody(config.URL))
+		cobra.CheckErr(err)
+
+		fmt.Print(s)
 
 		return nil
 	},
