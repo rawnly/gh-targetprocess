@@ -2,10 +2,8 @@ See: [[{{.ID}}] {{.Name}}]({{.URL}})
 
 {{ if .Description }}
 ---
-```markdown
 {{ range $line := .DescriptionRows }}
 {{ $line }}
 {{ end}}
-```
 {{ end }}
 ---
