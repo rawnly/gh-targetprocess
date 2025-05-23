@@ -17,7 +17,7 @@ type Assignable struct {
 }
 
 func (a *Assignable) URL(baseURL string) string {
-	return fmt.Sprintf("%s/entity/%d", a.ID)
+	return fmt.Sprintf("%s/entity/%d", baseURL, a.ID)
 }
 
 func (a *Assignable) GetPRTitle() string {
