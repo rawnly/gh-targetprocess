@@ -97,12 +97,12 @@ var rootCmd = &cobra.Command{
 		}
 
 		if assignee == "" {
-			prArgs = append(prArgs, "--assigne", "@me")
+			prArgs = append(prArgs, "-a", "@me")
 		} else {
-			prArgs = append(prArgs, "--assigne", assignee)
+			prArgs = append(prArgs, "-a", assignee)
 		}
 
-		if _, _, err := gh.Exec(prArgs...); err != nil {
+		if err := gh.ExecInteractive(ctx, prArgs...); err != nil {
 			return err
 		}
 
