@@ -5,11 +5,20 @@ import (
 )
 
 func GetTicketIDFromBranch(branch string) *string {
+	// Try the original pattern first (prefix/123_description)
 	re := regexp.MustCompile(`\w+/(\d+)_.*`)
 	matches := re.FindStringSubmatch(branch)
 	if len(matches) > 1 {
 		return &matches[1]
 	}
+
+	// Fallback: extract any sequence of 4+ digits from the branch name
+	re = regexp.MustCompile(`(\d{4,})`)
+	matches = re.FindStringSubmatch(branch)
+	if len(matches) > 1 {
+		return &matches[1]
+	}
+
 	return nil
 }
 
