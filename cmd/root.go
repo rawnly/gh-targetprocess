@@ -8,6 +8,7 @@ import (
 
 	"github.com/cli/go-gh/v2"
 	"github.com/rawnly/gh-targetprocess/cmd/configure"
+	"github.com/rawnly/gh-targetprocess/cmd/update"
 	"github.com/rawnly/gh-targetprocess/cmd/view"
 	"github.com/rawnly/gh-targetprocess/internal"
 	"github.com/rawnly/gh-targetprocess/internal/utils"
@@ -17,11 +18,13 @@ import (
 
 func init() {
 	rootCmd.AddCommand(view.Cmd)
+	rootCmd.AddCommand(update.Cmd)
 	rootCmd.AddCommand(configure.Cmd)
 
 	rootCmd.Flags().BoolP("draft", "d", false, "mark pr as draft")
 	rootCmd.Flags().StringP("label", "l", "", "label to add to the PR")
 	rootCmd.Flags().StringP("assign", "a", "", "assign PR")
+	rootCmd.Flags().BoolP("update", "", false, "update current PR body")
 }
 
 var rootCmd = &cobra.Command{
