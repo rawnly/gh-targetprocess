@@ -22,6 +22,7 @@ func init() {
 	rootCmd.AddCommand(configure.Cmd)
 
 	rootCmd.Flags().BoolP("draft", "d", false, "mark pr as draft")
+	rootCmd.Flags().BoolP("web", "w", true, "open pr in web browser")
 	rootCmd.Flags().StringP("label", "l", "", "label to add to the PR")
 	rootCmd.Flags().StringP("assign", "a", "", "assign PR")
 	rootCmd.Flags().BoolP("update", "", false, "update current PR body")
@@ -76,6 +77,11 @@ var rootCmd = &cobra.Command{
 			return err
 		}
 
+		web, err := flags.GetBool("web")
+		if err != nil {
+			return err
+		}
+
 		draft, err := flags.GetBool("draft")
 		if err != nil {
 			return err
@@ -86,10 +92,14 @@ var rootCmd = &cobra.Command{
 			return err
 		}
 
-		prArgs := []string{"pr", "create", "--title", title, "--body", body, "-w"}
+		prArgs := []string{"pr", "create", "--title", title, "--body", body}
 
 		if draft {
 			prArgs = append(prArgs, "--draft")
+		}
+
+		if web && !draft {
+			prArgs = append(prArgs, "--web")
 		}
 
 		if label != "" {
