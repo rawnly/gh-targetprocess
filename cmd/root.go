@@ -8,6 +8,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/charmbracelet/glamour"
 	"github.com/cli/go-gh/v2"
 	"github.com/rawnly/gh-targetprocess/cmd/configure"
 	"github.com/rawnly/gh-targetprocess/cmd/update"
@@ -28,7 +29,6 @@ func init() {
 	rootCmd.Flags().BoolP("web", "w", false, "open pr in web browser")
 	rootCmd.Flags().StringP("label", "l", "", "label to add to the PR")
 	rootCmd.Flags().StringP("assign", "a", "", "assign PR")
-	rootCmd.Flags().BoolP("update", "", false, "update current PR body")
 	rootCmd.Flags().BoolP("dry-run", "", false, "dry-run pr creation")
 }
 
@@ -154,7 +154,17 @@ var rootCmd = &cobra.Command{
 			fmt.Println()
 			fmt.Println()
 			fmt.Println(title)
-			fmt.Println(body)
+
+			if !noBody {
+				r, err := glamour.NewTermRenderer(
+					glamour.WithAutoStyle(),
+				)
+				cobra.CheckErr(err)
+
+				s, err := r.Render(body)
+				cobra.CheckErr(err)
+				fmt.Print(s)
+			}
 
 			return nil
 		}
