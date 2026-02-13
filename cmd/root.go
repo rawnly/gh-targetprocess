@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"regexp"
+	"strings"
 
 	"github.com/cli/go-gh/v2"
 	"github.com/rawnly/gh-targetprocess/cmd/configure"
@@ -22,10 +24,12 @@ func init() {
 	rootCmd.AddCommand(configure.Cmd)
 
 	rootCmd.Flags().BoolP("draft", "d", false, "mark pr as draft")
-	rootCmd.Flags().BoolP("web", "w", true, "open pr in web browser")
+	rootCmd.Flags().BoolP("no-body", "", false, "skip body")
+	rootCmd.Flags().BoolP("web", "w", false, "open pr in web browser")
 	rootCmd.Flags().StringP("label", "l", "", "label to add to the PR")
 	rootCmd.Flags().StringP("assign", "a", "", "assign PR")
 	rootCmd.Flags().BoolP("update", "", false, "update current PR body")
+	rootCmd.Flags().BoolP("dry-run", "", false, "dry-run pr creation")
 }
 
 var rootCmd = &cobra.Command{
@@ -33,8 +37,8 @@ var rootCmd = &cobra.Command{
 	Short:      "gh-targetprocess is a tool to create PRs starting from a Targetprocess ID or branch",
 	Example:    "gh targetprocess 12345",
 	ArgAliases: []string{"id", "url"},
-	// DisableFlagParsing: true,
-	Args: cobra.MaximumNArgs(1),
+	Aliases:    []string{"gh-tp"},
+	Args:       cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx := cmd.Context()
 		cfg := internal.GetConfig(ctx)
@@ -77,6 +81,16 @@ var rootCmd = &cobra.Command{
 			return err
 		}
 
+		noBody, err := flags.GetBool("no-body")
+		if err != nil {
+			return err
+		}
+
+		dryRun, err := flags.GetBool("dry-run")
+		if err != nil {
+			return err
+		}
+
 		web, err := flags.GetBool("web")
 		if err != nil {
 			return err
@@ -92,7 +106,22 @@ var rootCmd = &cobra.Command{
 			return err
 		}
 
-		prArgs := []string{"pr", "create", "--title", title, "--body", body}
+		titleArg := title
+		if dryRun {
+			titleArg = "<title>"
+		}
+
+		prArgs := []string{"pr", "create", "--title", titleArg}
+
+		if !noBody {
+			b := body
+
+			if dryRun {
+				b = "<body>"
+			}
+
+			prArgs = append(prArgs, "--body", b)
+		}
 
 		if draft {
 			prArgs = append(prArgs, "--draft")
@@ -110,6 +139,24 @@ var rootCmd = &cobra.Command{
 			prArgs = append(prArgs, "-a", "@me")
 		} else {
 			prArgs = append(prArgs, "-a", assignee)
+		}
+
+		if ok, _ := flags.GetBool("dry-run"); ok {
+			re, err := regexp.Compile(`\s+`)
+			if err != nil {
+				return err
+			}
+
+			args := strings.TrimSpace(re.ReplaceAllString(strings.Join(prArgs, " "), " "))
+
+			fmt.Println("Running in dry-run")
+			fmt.Println("Executing: `gh", args, "`")
+			fmt.Println()
+			fmt.Println()
+			fmt.Println(title)
+			fmt.Println(body)
+
+			return nil
 		}
 
 		if err := gh.ExecInteractive(ctx, prArgs...); err != nil {
