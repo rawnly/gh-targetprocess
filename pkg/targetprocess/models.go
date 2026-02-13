@@ -3,6 +3,7 @@ package targetprocess
 import (
 	"bytes"
 	"fmt"
+	"regexp"
 	"strings"
 	"text/template"
 
@@ -20,8 +21,39 @@ func (a *Assignable) URL(baseURL string) string {
 	return fmt.Sprintf("%s/entity/%d", baseURL, a.ID)
 }
 
+func (a *Assignable) getFormattedName() string {
+	name := strings.ToLower(a.Name)
+	re, e := regexp.Compile(`[^A-z\s_0-9-]`)
+	if e != nil {
+		return name
+	}
+
+	return re.ReplaceAllString(name, "")
+}
+
 func (a *Assignable) GetPRTitle() string {
-	return fmt.Sprintf("[%d]: %s", a.ID, a.Name)
+	var buf bytes.Buffer
+
+	tmpl, err := template.New("pr-title").Parse(templates.PRTitleTemplate())
+	if err != nil {
+		fmt.Println(err.Error())
+		return err.Error()
+	}
+
+	payload := struct {
+		Name string
+		ID   int
+	}{
+		ID:   a.ID,
+		Name: a.getFormattedName(),
+	}
+
+	if err := tmpl.Execute(&buf, payload); err != nil {
+		fmt.Println(err.Error())
+		return err.Error()
+	}
+
+	return buf.String()
 }
 
 func (a *Assignable) GetPRBody(baseURL string) string {
