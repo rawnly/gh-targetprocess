@@ -83,9 +83,12 @@ var rootCmd = &cobra.Command{
 			return err
 		}
 
-		noBody, err := flags.GetBool("no-body")
-		if err != nil {
-			return err
+		noBody := cfg.NoBody
+		if flags.Changed("no-body") {
+			noBody, err = flags.GetBool("no-body")
+			if err != nil {
+				return err
+			}
 		}
 
 		dryRun, err := flags.GetBool("dry-run")
@@ -108,9 +111,12 @@ var rootCmd = &cobra.Command{
 			return err
 		}
 
-		shouldComment, err := flags.GetBool("comment")
-		if err != nil {
-			return err
+		shouldComment := cfg.Comment
+		if flags.Changed("comment") {
+			shouldComment, err = flags.GetBool("comment")
+			if err != nil {
+				return err
+			}
 		}
 
 		titleArg := title

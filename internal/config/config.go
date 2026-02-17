@@ -16,8 +16,10 @@ type Me struct {
 }
 
 type Config struct {
-	URL   string `json:"url"`
-	Token string `json:"token"`
+	URL     string `json:"url"`
+	Token   string `json:"token"`
+	Comment bool   `json:"comment"`
+	NoBody  bool   `json:"no_body"`
 }
 
 func getUserName() string {
@@ -33,7 +35,10 @@ func Load() (*Config, error) {
 		return nil, Init()
 	}
 
-	return &Config{URL: url, Token: token}, err
+	comment := viper.GetBool("comment")
+	noBody := viper.GetBool("no_body")
+
+	return &Config{URL: url, Token: token, Comment: comment, NoBody: noBody}, err
 }
 
 func (c *Config) Save() error {
@@ -42,6 +47,8 @@ func (c *Config) Save() error {
 	}
 
 	viper.Set("url", c.URL)
+	viper.Set("comment", c.Comment)
+	viper.Set("no_body", c.NoBody)
 	return viper.WriteConfig()
 }
 
@@ -62,6 +69,7 @@ func Reset() error {
 	return nil
 }
 
+// Init runs the auth setup form (called on first run when no token is found).
 func Init() error {
 	var baseURL string
 	var token string
@@ -104,9 +112,36 @@ func Init() error {
 	}
 
 	config := Config{
-		URL:   baseURL,
-		Token: token,
+		URL:     baseURL,
+		Token:   token,
+		Comment: viper.GetBool("comment"),
+		NoBody:  viper.GetBool("no_body"),
 	}
 
 	return config.Save()
+}
+
+// InitDefaults runs the defaults setup form for comment/no-body preferences.
+func InitDefaults() error {
+	comment := viper.GetBool("comment")
+	includeBody := !viper.GetBool("no_body")
+
+	form := huh.NewForm(
+		huh.NewGroup(
+			huh.NewConfirm().
+				Title("Comment on Targetprocess by default?").
+				Value(&comment),
+			huh.NewConfirm().
+				Title("Include PR body by default?").
+				Value(&includeBody),
+		),
+	)
+
+	if err := form.Run(); err != nil {
+		return err
+	}
+
+	viper.Set("comment", comment)
+	viper.Set("no_body", !includeBody)
+	return viper.WriteConfig()
 }

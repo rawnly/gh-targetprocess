@@ -8,6 +8,14 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var defaultsCmd = &cobra.Command{
+	Use:   "defaults",
+	Short: "Configure default flags (comment, body)",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return config.InitDefaults()
+	},
+}
+
 var Cmd = &cobra.Command{
 	Use:   "configure",
 	Short: "Configure the gh-targetprocess CLI",
@@ -36,4 +44,8 @@ var Cmd = &cobra.Command{
 
 		return nil
 	},
+}
+
+func init() {
+	Cmd.AddCommand(defaultsCmd)
 }
