@@ -30,6 +30,8 @@ func init() {
 	rootCmd.Flags().StringP("label", "l", "", "label to add to the PR")
 	rootCmd.Flags().StringP("assign", "a", "", "assign PR")
 	rootCmd.Flags().BoolP("dry-run", "", false, "dry-run pr creation")
+
+	rootCmd.Flags().BoolP("comment", "c", false, "comment on targetprocess US with the pull-request link")
 }
 
 var rootCmd = &cobra.Command{
@@ -37,7 +39,7 @@ var rootCmd = &cobra.Command{
 	Short:      "gh-targetprocess is a tool to create PRs starting from a Targetprocess ID or branch",
 	Example:    "gh targetprocess 12345",
 	ArgAliases: []string{"id", "url"},
-	Aliases:    []string{"gh-tp"},
+	Aliases:    []string{},
 	Args:       cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx := cmd.Context()
@@ -106,6 +108,11 @@ var rootCmd = &cobra.Command{
 			return err
 		}
 
+		shouldComment, err := flags.GetBool("comment")
+		if err != nil {
+			return err
+		}
+
 		titleArg := title
 		if dryRun {
 			titleArg = "<title>"
@@ -141,7 +148,7 @@ var rootCmd = &cobra.Command{
 			prArgs = append(prArgs, "-a", assignee)
 		}
 
-		if ok, _ := flags.GetBool("dry-run"); ok {
+		if dryRun {
 			re, err := regexp.Compile(`\s+`)
 			if err != nil {
 				return err
@@ -165,13 +172,35 @@ var rootCmd = &cobra.Command{
 				cobra.CheckErr(err)
 				fmt.Print(s)
 			}
+		} else {
+			if err := gh.ExecInteractive(ctx, prArgs...); err != nil {
+				return err
+			}
+		}
 
+		if !shouldComment {
 			return nil
 		}
 
-		if err := gh.ExecInteractive(ctx, prArgs...); err != nil {
-			return err
+		fmt.Println("Posting comment on Targetprocess...")
+
+		if !dryRun {
+			stdout, _, err := gh.Exec("pr", "view", "--json", "url", "-q", ".url")
+			if err != nil {
+				return err
+			}
+
+			url := stdout.String()
+
+			commentBody := fmt.Sprintf("PR: %s", url)
+
+			fmt.Println("Commented: ", commentBody)
+			if err := tp.PostComment(commentBody, assignable.ID); err != nil {
+				return err
+			}
 		}
+
+		fmt.Println("Comment posted successfully")
 
 		return nil
 	},

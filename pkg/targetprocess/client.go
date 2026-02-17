@@ -1,6 +1,7 @@
 package targetprocess
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -64,6 +65,21 @@ func (c *Client) GetAssignable(id string) (*Assignable, error) {
 	return &assignable, nil
 }
 
+func (c *Client) PostComment(content string, assignable_id int) error {
+	path := "/v1/comments"
+
+	payload := CreateCommentPayload{
+		Description: content,
+		General: struct {
+			Id int "json:\"Id\""
+		}{
+			Id: assignable_id,
+		},
+	}
+
+	return c.Post(path, payload)
+}
+
 func (c *Client) Test(path string) error {
 	req, err := http.NewRequest("GET", c.baseURL+path, nil)
 	if err != nil {
@@ -114,6 +130,38 @@ func (c *Client) Get(path string, response any) error {
 	if err := json.NewDecoder(resp.Body).Decode(response); err != nil {
 		return err
 	}
+
+	return nil
+}
+
+func (c *Client) Post(path string, body any) error {
+	b, err := json.Marshal(body)
+	if err != nil {
+		return err
+	}
+
+	payload := bytes.NewBuffer(b)
+
+	req, err := http.NewRequest("POST", c.baseURL+path, payload)
+	if err != nil {
+		return err
+	}
+
+	// Query
+	params := req.URL.Query()
+	params.Add("access_token", c.apiKey)
+
+	req.URL.RawQuery = params.Encode()
+
+	// Headers
+	req.Header.Add("Content-Type", "application/json")
+
+	resp, err := c.client.Do(req)
+	if err != nil {
+		return err
+	}
+
+	defer resp.Body.Close()
 
 	return nil
 }

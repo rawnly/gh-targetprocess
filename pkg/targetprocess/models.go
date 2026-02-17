@@ -106,3 +106,10 @@ func (a *Assignable) GetPRBody(baseURL string) string {
 
 	return buf.String()
 }
+
+type CreateCommentPayload struct {
+	Description string `json:"Description"`
+	General     struct {
+		Id int `json:"Id"`
+	} `json:"General"`
+}
