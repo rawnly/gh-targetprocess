@@ -12,10 +12,10 @@ import (
 	"github.com/spf13/viper"
 )
 
-func init() {
+func init_viper() error {
 	viper.SetConfigType("json")
-	viper.SetConfigName("gh-targetprocess")
-	viper.AddConfigPath("$HOME/.config")
+	viper.SetConfigName("config")
+	viper.AddConfigPath("$HOME/.config/gh-targetprocess")
 	viper.SetEnvPrefix("GH_TARGETPROCESS")
 
 	viper.AutomaticEnv()
@@ -23,24 +23,36 @@ func init() {
 	if err := viper.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
 			if err = viper.SafeWriteConfig(); err != nil {
-				fmt.Println(err)
-				return
+				return err
 			}
 
 			if err = config.Init(); err != nil {
-				fmt.Println(err)
-				return
+				return err
 			}
 
-			return
+			return nil
 		}
 
-		fmt.Println(err)
-		return
+		return err
 	}
+
+	return nil
 }
 
 func main() {
+	migrated, err := config.MigrateConfig()
+	cobra.CheckErr(err)
+
+	if migrated {
+		fmt.Println()
+		fmt.Println("Found an old configuration file. Migrated to the new config.")
+		fmt.Println()
+	}
+
+	if err := init_viper(); err != nil {
+		cobra.CheckErr(err)
+	}
+
 	cfg, err := config.Load()
 	cobra.CheckErr(err)
 

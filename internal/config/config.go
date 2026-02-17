@@ -2,11 +2,15 @@ package config
 
 import (
 	"errors"
+	"io"
 	"os"
+	"path"
 	"strings"
 
 	"github.com/charmbracelet/huh"
+	"github.com/rawnly/gh-targetprocess/internal/utils"
 	"github.com/rawnly/gh-targetprocess/pkg/targetprocess"
+	"github.com/rawnly/gh-targetprocess/templates"
 	"github.com/spf13/viper"
 	"github.com/zalando/go-keyring"
 )
@@ -69,6 +73,71 @@ func Reset() error {
 	return nil
 }
 
+func MigrateConfig() (bool, error) {
+	legacyConfigFile := path.Join(
+		utils.ExpandPath("~/.config"),
+		"gh-targetprocess.json",
+	)
+
+	newConfigDir := utils.ExpandPath("~/.config/gh-targetprocess")
+	newConfigFile := path.Join(newConfigDir, "config.json")
+
+	_, err := os.Stat(legacyConfigFile)
+
+	if err != nil {
+		if os.IsNotExist(err) {
+			return false, nil
+		}
+
+		return false, err
+	}
+
+	source, err := os.Open(legacyConfigFile)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return false, nil
+		}
+
+		return false, err
+	}
+
+	defer source.Close()
+
+	if _, err := os.Stat(newConfigDir); err != nil {
+		if os.IsNotExist(err) {
+			if err := os.MkdirAll(newConfigDir, 0700); err != nil {
+				return false, err
+			}
+		} else {
+			return false, err
+		}
+	}
+
+	dest, err := os.Create(newConfigFile)
+	if err != nil {
+		return false, err
+	}
+	defer dest.Close()
+
+	if _, err := io.Copy(dest, source); err != nil {
+		return false, err
+	}
+
+	if err := templates.WriteDefaults(); err != nil {
+		return false, err
+	}
+
+	if err := os.Remove(legacyConfigFile); err != nil {
+		if os.IsNotExist(err) {
+			return true, nil
+		}
+
+		return true, errors.New("failed to cleanup old configuration")
+	}
+
+	return true, nil
+}
+
 // Init runs the auth setup form (called on first run when no token is found).
 func Init() error {
 	var baseURL string
@@ -118,7 +187,15 @@ func Init() error {
 		NoBody:  viper.GetBool("no_body"),
 	}
 
-	return config.Save()
+	if err := config.Save(); err != nil {
+		return err
+	}
+
+	if err := templates.WriteDefaults(); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // InitDefaults runs the defaults setup form for comment/no-body preferences.

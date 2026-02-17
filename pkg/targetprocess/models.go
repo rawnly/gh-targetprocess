@@ -34,7 +34,13 @@ func (a *Assignable) getFormattedName() string {
 func (a *Assignable) GetPRTitle() string {
 	var buf bytes.Buffer
 
-	tmpl, err := template.New("pr-title").Parse(templates.PRTitleTemplate())
+	titleTemplate, err := templates.PRTitleTemplate()
+	if err != nil {
+		fmt.Println(err.Error())
+		return ""
+	}
+
+	tmpl, err := template.New("pr-title").Parse(titleTemplate)
 	if err != nil {
 		fmt.Println(err.Error())
 		return err.Error()
@@ -59,7 +65,13 @@ func (a *Assignable) GetPRTitle() string {
 func (a *Assignable) GetPRBody(baseURL string) string {
 	var buf bytes.Buffer
 
-	tmpl, err := template.New("pr-body").Parse(templates.PRBodyTemplate())
+	bodyTemplate, err := templates.PRBodyTemplate()
+	if err != nil {
+		fmt.Println(err.Error())
+		return ""
+	}
+
+	tmpl, err := template.New("pr-body").Parse(bodyTemplate)
 	if err != nil {
 		return err.Error()
 	}
