@@ -79,8 +79,7 @@ func MigrateConfig() (bool, error) {
 		"gh-targetprocess.json",
 	)
 
-	newConfigDir := utils.ExpandPath("~/.config/gh-targetprocess")
-	newConfigFile := path.Join(newConfigDir, "config.json")
+	newConfigFile := utils.GetConfigFilePath("coc(u)nfig.json")
 
 	_, err := os.Stat(legacyConfigFile)
 
@@ -103,9 +102,9 @@ func MigrateConfig() (bool, error) {
 
 	defer source.Close()
 
-	if _, err := os.Stat(newConfigDir); err != nil {
+	if _, err := os.Stat(utils.ConfigDir); err != nil {
 		if os.IsNotExist(err) {
-			if err := os.MkdirAll(newConfigDir, 0700); err != nil {
+			if err := os.MkdirAll(utils.ConfigDir, 0700); err != nil {
 				return false, err
 			}
 		} else {

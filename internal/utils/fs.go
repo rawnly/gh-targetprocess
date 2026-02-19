@@ -17,3 +17,7 @@ func ExpandPath(p string) string {
 
 	return p
 }
+
+func GetConfigFilePath(filename string) string {
+	return path.Join(ExpandPath(ConfigDir), filename)
+}
