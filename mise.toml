@@ -1,0 +1,6 @@
+[tools]
+go = "1.25"
+cobra-cli = "latest"
+
+[tool_alias]
+cobra-cli = "go:github.com/spf13/cobra-cli"

@@ -1,6 +1,7 @@
 package config
 
 import (
+	"context"
 	"errors"
 	"io"
 	"os"
@@ -32,11 +33,11 @@ func getUserName() string {
 
 const serviceName = "gh-targetprocess.access_token"
 
-func Load() (*Config, error) {
+func Load(ctx context.Context) (*Config, error) {
 	url := viper.GetString("url")
 	token, err := keyring.Get(serviceName, getUserName())
 	if err != nil {
-		return nil, Init()
+		return nil, Init(ctx)
 	}
 
 	comment := viper.GetBool("comment")
@@ -138,7 +139,7 @@ func MigrateConfig() (bool, error) {
 }
 
 // Init runs the auth setup form (called on first run when no token is found).
-func Init() error {
+func Init(ctx context.Context) error {
 	var baseURL string
 	var token string
 
@@ -165,7 +166,7 @@ func Init() error {
 				Validate(func(token string) error {
 					tp := targetprocess.New(baseURL, token)
 
-					if err := tp.Test("/v1/Users/loggeduser"); err != nil {
+					if err := tp.Test(ctx, "/v1/Users/loggeduser"); err != nil {
 						return err
 					}
 

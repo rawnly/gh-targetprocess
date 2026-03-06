@@ -2,6 +2,7 @@ package targetprocess
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -53,19 +54,19 @@ func New(baseURL string, apiKey string) *Client {
 	}
 }
 
-func (c *Client) GetAssignable(id string) (*Assignable, error) {
+func (c *Client) GetAssignable(ctx context.Context, id string) (*Assignable, error) {
 	var assignable Assignable
 
 	path := fmt.Sprintf("/v1/assignable/%s", id)
 
-	if err := c.Get(path, &assignable); err != nil {
+	if err := c.Get(ctx, path, &assignable); err != nil {
 		return nil, err
 	}
 
 	return &assignable, nil
 }
 
-func (c *Client) PostComment(content string, assignable_id int) error {
+func (c *Client) PostComment(ctx context.Context, content string, assignable_id int) error {
 	path := "/v1/comments"
 
 	payload := CreateCommentPayload{
@@ -77,11 +78,11 @@ func (c *Client) PostComment(content string, assignable_id int) error {
 		},
 	}
 
-	return c.Post(path, payload)
+	return c.Post(ctx, path, payload)
 }
 
-func (c *Client) Test(path string) error {
-	req, err := http.NewRequest("GET", c.baseURL+path, nil)
+func (c *Client) Test(ctx context.Context, path string) error {
+	req, err := http.NewRequestWithContext(ctx, "GET", c.baseURL+path, nil)
 	if err != nil {
 		return err
 	}
@@ -105,8 +106,8 @@ func (c *Client) Test(path string) error {
 	return nil
 }
 
-func (c *Client) Get(path string, response any) error {
-	req, err := http.NewRequest("GET", c.baseURL+path, nil)
+func (c *Client) Get(ctx context.Context, path string, response any) error {
+	req, err := http.NewRequestWithContext(ctx, "GET", c.baseURL+path, nil)
 	if err != nil {
 		return err
 	}
@@ -134,7 +135,7 @@ func (c *Client) Get(path string, response any) error {
 	return nil
 }
 
-func (c *Client) Post(path string, body any) error {
+func (c *Client) Post(ctx context.Context, path string, body any) error {
 	b, err := json.Marshal(body)
 	if err != nil {
 		return err
@@ -142,7 +143,7 @@ func (c *Client) Post(path string, body any) error {
 
 	payload := bytes.NewBuffer(b)
 
-	req, err := http.NewRequest("POST", c.baseURL+path, payload)
+	req, err := http.NewRequestWithContext(ctx, "POST", c.baseURL+path, payload)
 	if err != nil {
 		return err
 	}

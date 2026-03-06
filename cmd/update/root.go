@@ -1,7 +1,9 @@
 package update
 
 import (
+	"context"
 	"errors"
+	"time"
 
 	"github.com/cli/go-gh/v2"
 	"github.com/rawnly/gh-targetprocess/internal"
@@ -19,7 +21,9 @@ var Cmd = &cobra.Command{
 	Short: "Update current PR with TargetProcess data",
 	Args:  cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		ctx := cmd.Context()
+		ctx, cancel := context.WithTimeout(cmd.Context(), 5*time.Second)
+		defer cancel()
+
 		tp := internal.GetTargetProcess(ctx)
 		config := internal.GetConfig(ctx)
 
@@ -45,7 +49,7 @@ var Cmd = &cobra.Command{
 			return errors.New("invalid ticket ID")
 		}
 
-		assignable, err := tp.GetAssignable(*id)
+		assignable, err := tp.GetAssignable(ctx, *id)
 		if err != nil {
 			return err
 		}

@@ -1,6 +1,7 @@
 package configure
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/charmbracelet/huh"
@@ -20,6 +21,9 @@ var Cmd = &cobra.Command{
 	Use:   "configure",
 	Short: "Configure the gh-targetprocess CLI",
 	RunE: func(cmd *cobra.Command, args []string) error {
+		ctx, cancel := context.WithCancel(cmd.Context())
+		defer cancel()
+
 		var confirmed bool
 		confirm := huh.NewConfirm().
 			Title("Are you sure you want to wipe your existing configuration?").
@@ -38,7 +42,7 @@ var Cmd = &cobra.Command{
 			return err
 		}
 
-		if err := config.Init(); err != nil {
+		if err := config.Init(ctx); err != nil {
 			return err
 		}
 

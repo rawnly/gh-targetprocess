@@ -3,6 +3,10 @@ package main
 import (
 	"context"
 	"fmt"
+	"os"
+	"os/signal"
+	"strings"
+	"syscall"
 
 	"github.com/rawnly/gh-targetprocess/cmd"
 	"github.com/rawnly/gh-targetprocess/internal"
@@ -12,7 +16,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-func init_viper() error {
+func init_viper(ctx context.Context) error {
 	viper.SetConfigType("json")
 	viper.SetConfigName("config")
 	viper.AddConfigPath("$HOME/.config/gh-targetprocess")
@@ -26,7 +30,7 @@ func init_viper() error {
 				return err
 			}
 
-			if err = config.Init(); err != nil {
+			if err = config.Init(ctx); err != nil {
 				return err
 			}
 
@@ -40,6 +44,15 @@ func init_viper() error {
 }
 
 func main() {
+	ctx, cancel := context.WithCancel(context.Background())
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGTERM)
+
+	defer func() {
+		<-sigChan
+		cancel()
+	}()
+
 	migrated, err := config.MigrateConfig()
 	cobra.CheckErr(err)
 
@@ -49,17 +62,34 @@ func main() {
 		fmt.Println()
 	}
 
-	if err := init_viper(); err != nil {
+	if err := init_viper(ctx); err != nil {
 		cobra.CheckErr(err)
 	}
 
-	cfg, err := config.Load()
+	cfg, err := config.Load(ctx)
 	cobra.CheckErr(err)
 
 	tp := targetprocess.New(cfg.URL, cfg.Token)
 
-	ctx := context.Background()
 	ctx = internal.InitContext(ctx, cfg, tp)
 
-	cmd.Execute(ctx)
+	root := cmd.NewRootCMD()
+	err = root.ExecuteContext(ctx)
+
+	if err != nil {
+		switch {
+		case strings.Contains(err.Error(), "unknown command") || strings.Contains(err.Error(), "unknown flag"):
+			showSuggestion(root, err)
+		default:
+			fmt.Fprintln(root.OutOrStderr(), err)
+		}
+	}
+
+	cancel()
+	os.Exit(1)
+}
+
+func showSuggestion(cmd *cobra.Command, err error) {
+	fmt.Fprintf(cmd.OutOrStderr(), cmd.UsageString())
+	fmt.Fprintf(cmd.OutOrStderr(), "\nError: Invalid ussage: %v\n", err)
 }
