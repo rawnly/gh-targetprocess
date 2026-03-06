@@ -25,12 +25,14 @@ func NewRootCMD() *cobra.Command {
 		Use:   "gh-targetprocess",
 		Short: "gh-targetprocess is a tool to create PRs starting from a Targetprocess ID or branch",
 		Example: `
-		gh targetprocess --assignee @me
-		gh targetprocess --base feature/stacked-base
-		gh targetprocess --reviewer monalisa,hubot --reviewer myorg/team-name,
+  gh targetprocess --assignee @me
+  gh targetprocess --base feature/stacked-base
+  gh targetprocess --reviewer monalisa,hubot --reviewer myorg/team-name,
 		`,
-		Aliases: []string{},
-		Args:    cobra.MaximumNArgs(1),
+		Aliases:       []string{},
+		Args:          cobra.MaximumNArgs(1),
+		SilenceErrors: true,
+		SilenceUsage:  true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx, cancel := context.WithTimeout(cmd.Context(), 5*time.Second)
 			defer cancel()

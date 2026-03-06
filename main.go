@@ -78,7 +78,7 @@ func main() {
 
 	if err != nil {
 		switch {
-		case strings.Contains(err.Error(), "unknown command") || strings.Contains(err.Error(), "unknown flag"):
+		case strings.Contains(err.Error(), "unknown command") || strings.Contains(err.Error(), "unknown flag") || strings.Contains(err.Error(), "accepts"):
 			showSuggestion(root, err)
 		default:
 			fmt.Fprintln(root.OutOrStderr(), err)
@@ -91,5 +91,5 @@ func main() {
 
 func showSuggestion(cmd *cobra.Command, err error) {
 	fmt.Fprintf(cmd.OutOrStderr(), cmd.UsageString())
-	fmt.Fprintf(cmd.OutOrStderr(), "\nError: Invalid ussage: %v\n", err)
+	fmt.Fprintf(cmd.OutOrStderr(), "\nError: Invalid usage: %v\n", err)
 }
