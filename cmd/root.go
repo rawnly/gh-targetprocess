@@ -14,6 +14,7 @@ import (
 	"github.com/rawnly/gh-targetprocess/cmd/update"
 	"github.com/rawnly/gh-targetprocess/cmd/view"
 	"github.com/rawnly/gh-targetprocess/internal"
+	"github.com/rawnly/gh-targetprocess/internal/logging"
 	"github.com/rawnly/gh-targetprocess/internal/utils"
 	"github.com/rawnly/gh-targetprocess/pkg/targetprocess"
 	"github.com/spf13/cobra"
@@ -21,15 +22,22 @@ import (
 
 func NewRootCMD() *cobra.Command {
 	var cmd = &cobra.Command{
-		Use:        "gh-targetprocess",
-		Short:      "gh-targetprocess is a tool to create PRs starting from a Targetprocess ID or branch",
-		Example:    "gh targetprocess 12345",
-		ArgAliases: []string{"id", "url"},
-		Aliases:    []string{},
-		Args:       cobra.MaximumNArgs(1),
+		Use:   "gh-targetprocess",
+		Short: "gh-targetprocess is a tool to create PRs starting from a Targetprocess ID or branch",
+		Example: `
+		gh targetprocess --assignee @me
+		gh targetprocess --base feature/stacked-base
+		gh targetprocess --reviewer monalisa,hubot --reviewer myorg/team-name,
+		`,
+		Aliases: []string{},
+		Args:    cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx, cancel := context.WithTimeout(cmd.Context(), 5*time.Second)
 			defer cancel()
+
+			stdout := cmd.OutOrStdout()
+
+			logf := logging.GetLogger(stdout)
 
 			cfg := internal.GetConfig(ctx)
 			tp := internal.GetTargetProcess(ctx)
@@ -66,7 +74,7 @@ func NewRootCMD() *cobra.Command {
 			body := assignable.GetPRBody(cfg.URL)
 			flags := cmd.Flags()
 
-			assignee, err := flags.GetString("assign")
+			assignee, err := flags.GetString("assignee")
 			if err != nil {
 				return err
 			}
@@ -84,11 +92,6 @@ func NewRootCMD() *cobra.Command {
 				return err
 			}
 
-			web, err := flags.GetBool("web")
-			if err != nil {
-				return err
-			}
-
 			draft, err := flags.GetBool("draft")
 			if err != nil {
 				return err
@@ -97,6 +100,29 @@ func NewRootCMD() *cobra.Command {
 			label, err := flags.GetString("label")
 			if err != nil {
 				return err
+			}
+
+			reviewer, err := flags.GetString("reviewer")
+			if err != nil {
+				return err
+			}
+
+			milestone, err := flags.GetString("milestone")
+			if err != nil {
+				return err
+			}
+
+			base, err := flags.GetString("base")
+			if err != nil {
+				return err
+			}
+
+			web := cfg.Web
+			if flags.Changed("web") {
+				web, err = flags.GetBool("web")
+				if err != nil {
+					return err
+				}
 			}
 
 			shouldComment := cfg.Comment
@@ -122,6 +148,18 @@ func NewRootCMD() *cobra.Command {
 				}
 
 				prArgs = append(prArgs, "--body", b)
+			}
+
+			if reviewer != "" {
+				prArgs = append(prArgs, "--reviewer", reviewer)
+			}
+
+			if milestone != "" {
+				prArgs = append(prArgs, "--milestone", milestone)
+			}
+
+			if base != "" {
+				prArgs = append(prArgs, "--base", base)
 			}
 
 			if draft {
@@ -150,11 +188,11 @@ func NewRootCMD() *cobra.Command {
 
 				args := strings.TrimSpace(re.ReplaceAllString(strings.Join(prArgs, " "), " "))
 
-				fmt.Println("Running in dry-run")
-				fmt.Println("Executing: `gh", args, "`")
-				fmt.Println()
-				fmt.Println()
-				fmt.Println(title)
+				logf("Running in dry-run")
+				logf("Executing: `gh %s`", args)
+				logf()
+				logf()
+				logf(title)
 
 				if !noBody {
 					r, err := glamour.NewTermRenderer(
@@ -162,9 +200,12 @@ func NewRootCMD() *cobra.Command {
 					)
 					cobra.CheckErr(err)
 
-					s, err := r.Render(body)
-					cobra.CheckErr(err)
-					fmt.Print(s)
+					rendered, err := r.Render(body)
+					if err != nil {
+						return fmt.Errorf("rendering body: %w", err)
+					}
+
+					fmt.Print(rendered)
 				}
 			} else {
 				if err := gh.ExecInteractive(ctx, prArgs...); err != nil {
@@ -176,7 +217,7 @@ func NewRootCMD() *cobra.Command {
 				return nil
 			}
 
-			fmt.Println("Posting comment on Targetprocess...")
+			logf("Posting comment on Targetprocess...")
 
 			if !dryRun {
 				stdout, _, err := gh.Exec("pr", "view", "--json", "url", "-q", ".url")
@@ -188,13 +229,13 @@ func NewRootCMD() *cobra.Command {
 
 				commentBody := fmt.Sprintf("PR: %s", url)
 
-				fmt.Println("Commented: ", commentBody)
+				logf("Commented: ", commentBody)
 				if err := tp.PostComment(ctx, commentBody, assignable.ID); err != nil {
 					return err
 				}
 			}
 
-			fmt.Println("Comment posted successfully")
+			logf("Comment posted successfully")
 
 			return nil
 		},
@@ -208,9 +249,14 @@ func NewRootCMD() *cobra.Command {
 	cmd.Flags().BoolP("draft", "d", false, "mark pr as draft")
 	cmd.Flags().BoolP("no-body", "", false, "skip body")
 	cmd.Flags().BoolP("web", "w", false, "open pr in web browser")
-	cmd.Flags().StringP("label", "l", "", "label to add to the PR")
-	cmd.Flags().StringP("assign", "a", "", "assign PR")
 	cmd.Flags().BoolP("dry-run", "", false, "dry-run pr creation")
+
+	// mimic gh pr create [flags]
+	cmd.Flags().StringP("assignee", "a", "", "Assign people by their login.")
+	cmd.Flags().StringP("reviewer", "r", "", "Request reviews from people or teams by their handle")
+	cmd.Flags().StringP("milestone", "m", "", "Add the pull request to a milestone by name")
+	cmd.Flags().StringP("label", "l", "", "Add labels by name")
+	cmd.Flags().StringP("base", "B", "", "The branch into which you want your code merged")
 
 	cmd.Flags().BoolP("comment", "c", false, "comment on targetprocess US with the pull-request link")
 

@@ -21,10 +21,13 @@ type Me struct {
 }
 
 type Config struct {
-	URL     string `json:"url"`
-	Token   string `json:"token"`
-	Comment bool   `json:"comment"`
-	NoBody  bool   `json:"no_body"`
+	URL   string `json:"url"`
+	Token string `json:"token"`
+	/// comment on target process assignable with PR link
+	Comment bool `json:"comment"`
+	NoBody  bool `json:"no_body"`
+	/// opens the browser by default
+	Web bool `json:"web"`
 }
 
 func getUserName() string {
@@ -42,8 +45,9 @@ func Load(ctx context.Context) (*Config, error) {
 
 	comment := viper.GetBool("comment")
 	noBody := viper.GetBool("no_body")
+	web := viper.GetBool("web")
 
-	return &Config{URL: url, Token: token, Comment: comment, NoBody: noBody}, err
+	return &Config{URL: url, Token: token, Web: web, Comment: comment, NoBody: noBody}, err
 }
 
 func (c *Config) Save() error {
@@ -54,6 +58,8 @@ func (c *Config) Save() error {
 	viper.Set("url", c.URL)
 	viper.Set("comment", c.Comment)
 	viper.Set("no_body", c.NoBody)
+	viper.Set("web", c.Web)
+
 	return viper.WriteConfig()
 }
 
@@ -185,6 +191,7 @@ func Init(ctx context.Context) error {
 		Token:   token,
 		Comment: viper.GetBool("comment"),
 		NoBody:  viper.GetBool("no_body"),
+		Web:     viper.GetBool("web"),
 	}
 
 	if err := config.Save(); err != nil {
@@ -201,6 +208,7 @@ func Init(ctx context.Context) error {
 // InitDefaults runs the defaults setup form for comment/no-body preferences.
 func InitDefaults() error {
 	comment := viper.GetBool("comment")
+	web := viper.GetBool("web")
 	includeBody := !viper.GetBool("no_body")
 
 	form := huh.NewForm(
@@ -208,6 +216,9 @@ func InitDefaults() error {
 			huh.NewConfirm().
 				Title("Comment on Targetprocess by default?").
 				Value(&comment),
+			huh.NewConfirm().
+				Title("Open the browser before creating the pull-request?").
+				Value(&web),
 			huh.NewConfirm().
 				Title("Include PR body by default?").
 				Value(&includeBody),
@@ -220,5 +231,7 @@ func InitDefaults() error {
 
 	viper.Set("comment", comment)
 	viper.Set("no_body", !includeBody)
+	viper.Set("web", web)
+
 	return viper.WriteConfig()
 }
