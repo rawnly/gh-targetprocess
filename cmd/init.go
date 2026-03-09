@@ -23,8 +23,7 @@ func NewInitCmd() *cobra.Command {
 		SilenceUsage:  true,
 		Example:       "init 210045",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			ctx, cancel := context.WithTimeout(cmd.Context(), time.Second*5)
-			defer cancel()
+			ctx := cmd.Context()
 
 			logf := logging.GetLogger(cmd.OutOrStdout())
 
@@ -42,7 +41,9 @@ func NewInitCmd() *cobra.Command {
 			id := utils.ExtractTicketID(&idOrUrl)
 			tp := internal.GetTargetProcess(ctx)
 
-			assignable, err := tp.GetAssignable(ctx, *id)
+			httpCtx, cancel := context.WithTimeout(ctx, time.Second*5)
+			defer cancel()
+			assignable, err := tp.GetAssignable(httpCtx, *id)
 			if err != nil {
 				return err
 			}

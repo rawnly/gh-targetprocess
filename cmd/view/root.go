@@ -22,8 +22,7 @@ var Cmd = &cobra.Command{
 	Short: "View the current ticket",
 	Args:  cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		ctx, cancel := context.WithTimeout(cmd.Context(), time.Second*5)
-		defer cancel()
+		ctx := cmd.Context()
 
 		tp := internal.GetTargetProcess(ctx)
 		config := internal.GetConfig(ctx)
@@ -43,7 +42,10 @@ var Cmd = &cobra.Command{
 			return errors.New("invalid ticket ID")
 		}
 
-		assignable, err := tp.GetAssignable(ctx, *id)
+		httpCtx, cancel := context.WithTimeout(ctx, time.Second*5)
+		defer cancel()
+
+		assignable, err := tp.GetAssignable(httpCtx, *id)
 		cobra.CheckErr(err)
 
 		if web {

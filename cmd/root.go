@@ -34,8 +34,7 @@ func NewRootCMD() *cobra.Command {
 		SilenceErrors: true,
 		SilenceUsage:  true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			ctx, cancel := context.WithTimeout(cmd.Context(), 5*time.Second)
-			defer cancel()
+			ctx := cmd.Context()
 
 			stdout := cmd.OutOrStdout()
 
@@ -68,7 +67,11 @@ func NewRootCMD() *cobra.Command {
 			}
 
 			assignable := targetprocess.Assignable{}
-			if err := tp.Get(ctx, fmt.Sprintf("/v1/Assignables/%s", *id), &assignable); err != nil {
+
+			httpCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+			defer cancel()
+
+			if err := tp.Get(httpCtx, fmt.Sprintf("/v1/Assignables/%s", *id), &assignable); err != nil {
 				return err
 			}
 
@@ -210,7 +213,7 @@ func NewRootCMD() *cobra.Command {
 					fmt.Print(rendered)
 				}
 			} else {
-				if err := gh.ExecInteractive(ctx, prArgs...); err != nil {
+				if err := gh.ExecInteractive(cmd.Context(), prArgs...); err != nil {
 					return err
 				}
 			}

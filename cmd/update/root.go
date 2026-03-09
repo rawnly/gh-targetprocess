@@ -21,8 +21,7 @@ var Cmd = &cobra.Command{
 	Short: "Update current PR with TargetProcess data",
 	Args:  cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		ctx, cancel := context.WithTimeout(cmd.Context(), 5*time.Second)
-		defer cancel()
+		ctx := cmd.Context()
 
 		tp := internal.GetTargetProcess(ctx)
 		config := internal.GetConfig(ctx)
@@ -49,7 +48,10 @@ var Cmd = &cobra.Command{
 			return errors.New("invalid ticket ID")
 		}
 
-		assignable, err := tp.GetAssignable(ctx, *id)
+		httpCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+		defer cancel()
+
+		assignable, err := tp.GetAssignable(httpCtx, *id)
 		if err != nil {
 			return err
 		}
