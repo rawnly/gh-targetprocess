@@ -10,6 +10,7 @@ import (
 
 	"github.com/charmbracelet/glamour"
 	"github.com/cli/go-gh/v2"
+	"github.com/rawnly/gh-targetprocess/cmd/comment"
 	"github.com/rawnly/gh-targetprocess/cmd/configure"
 	"github.com/rawnly/gh-targetprocess/cmd/update"
 	"github.com/rawnly/gh-targetprocess/cmd/view"
@@ -250,6 +251,7 @@ func NewRootCMD() *cobra.Command {
 	cmd.AddCommand(update.Cmd)
 	cmd.AddCommand(configure.Cmd)
 	cmd.AddCommand(NewInitCmd())
+	cmd.AddCommand(comment.NewCommentCommand())
 
 	cmd.Flags().BoolP("draft", "d", false, "mark pr as draft")
 	cmd.Flags().BoolP("no-body", "", false, "skip body")
