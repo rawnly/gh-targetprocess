@@ -6,7 +6,9 @@ package cmd
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os/exec"
+	"regexp"
 	"strings"
 	"time"
 
@@ -48,10 +50,15 @@ func NewInitCmd() *cobra.Command {
 				return err
 			}
 
+			sanitized := strings.ToLower(strings.ReplaceAll(assignable.Name, " ", "_"))
+			re := regexp.MustCompile(`[^a-z0-9_\-]`)
+			sanitized = re.ReplaceAllString(sanitized, "")
+			sanitized = regexp.MustCompile(`_+`).ReplaceAllString(sanitized, "_")
+			sanitized = strings.Trim(sanitized, "_")
+
 			branchName := strings.Join([]string{
 				"feature",
-				*id,
-				strings.ToLower(strings.ReplaceAll(assignable.Name, " ", "_")),
+				fmt.Sprintf("%s_%s", *id, sanitized),
 			}, "/")
 
 			if dryRun {
