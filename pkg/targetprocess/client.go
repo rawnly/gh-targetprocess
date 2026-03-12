@@ -7,6 +7,9 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
+
+	"github.com/rawnly/gh-targetprocess/internal/logging"
 )
 
 type transport struct {
@@ -66,7 +69,19 @@ func (c *Client) GetAssignable(ctx context.Context, id string) (*Assignable, err
 	return &assignable, nil
 }
 
-func (c *Client) PostComment(ctx context.Context, content string, assignable_id int) error {
+func (c *Client) UpdateState(ctx context.Context, assignableId int, newState EntityState) error {
+	path := fmt.Sprintf("/v1/assignable/%d", assignableId)
+
+	payload := map[string]any{
+		"EntityState": map[string]any{
+			"Id": newState,
+		},
+	}
+
+	return c.Post(ctx, path, payload)
+}
+
+func (c *Client) PostComment(ctx context.Context, content string, assignableId int) error {
 	path := "/v1/comments"
 
 	payload := CreateCommentPayload{
@@ -74,7 +89,7 @@ func (c *Client) PostComment(ctx context.Context, content string, assignable_id 
 		General: struct {
 			Id int "json:\"Id\""
 		}{
-			Id: assignable_id,
+			Id: assignableId,
 		},
 	}
 
@@ -136,6 +151,9 @@ func (c *Client) Get(ctx context.Context, path string, response any) error {
 }
 
 func (c *Client) Post(ctx context.Context, path string, body any) error {
+	log := logging.GetLogger(os.Stdout)
+	log("POST", path)
+
 	b, err := json.Marshal(body)
 	if err != nil {
 		return err

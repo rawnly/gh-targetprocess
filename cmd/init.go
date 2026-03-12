@@ -15,6 +15,7 @@ import (
 	"github.com/rawnly/gh-targetprocess/internal"
 	"github.com/rawnly/gh-targetprocess/internal/logging"
 	"github.com/rawnly/gh-targetprocess/internal/utils"
+	"github.com/rawnly/gh-targetprocess/pkg/targetprocess"
 	"github.com/spf13/cobra"
 )
 
@@ -53,8 +54,11 @@ func NewInitCmd() *cobra.Command {
 			sanitized := strings.ToLower(strings.ReplaceAll(assignable.Name, " ", "_"))
 			re := regexp.MustCompile(`[^a-z0-9_\-]`)
 			sanitized = re.ReplaceAllString(sanitized, "")
-			sanitized = regexp.MustCompile(`_+`).ReplaceAllString(sanitized, "_")
-			sanitized = strings.Trim(sanitized, "_")
+			sanitized = regexp.MustCompile(`[_\-]{2,}`).ReplaceAllString(sanitized, "_")
+			sanitized = strings.Trim(sanitized, "_-")
+			if len(sanitized) > 60 {
+				sanitized = strings.TrimRight(sanitized[:60], "_-")
+			}
 
 			branchName := strings.Join([]string{
 				"feature",
@@ -69,6 +73,10 @@ func NewInitCmd() *cobra.Command {
 			checkoutCmd := exec.Command("git", "checkout", "-b", branchName)
 			checkoutCmd.Stdout = cmd.OutOrStdout()
 			checkoutCmd.Stderr = cmd.OutOrStderr()
+
+			if err := tp.UpdateState(ctx, assignable.ID, targetprocess.EntityStateInProgress); err != nil {
+				return fmt.Errorf("updating US state: %w", err)
+			}
 
 			return checkoutCmd.Start()
 		},

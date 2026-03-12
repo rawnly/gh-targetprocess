@@ -219,6 +219,10 @@ func NewRootCMD() *cobra.Command {
 				}
 			}
 
+			if err := tp.UpdateState(httpCtx, assignable.ID, targetprocess.EntityStateInTest); err != nil {
+				return fmt.Errorf("updating entity state: %w", err)
+			}
+
 			if !shouldComment {
 				return nil
 			}

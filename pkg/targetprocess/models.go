@@ -125,3 +125,14 @@ type CreateCommentPayload struct {
 		Id int `json:"Id"`
 	} `json:"General"`
 }
+
+type EntityState = int
+
+const (
+	EntityStateOpen         = 73
+	EntityStatePlanned      = 74
+	EntityStateInProgress   = 75
+	EntityStateWaitToDeploy = 137
+	EntityStateInTest       = 76
+	EntityStateInStaging    = 127
+)
