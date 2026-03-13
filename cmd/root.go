@@ -13,6 +13,7 @@ import (
 	"github.com/rawnly/gh-targetprocess/cmd/comment"
 	"github.com/rawnly/gh-targetprocess/cmd/configure"
 	"github.com/rawnly/gh-targetprocess/cmd/update"
+	"github.com/rawnly/gh-targetprocess/cmd/versioncheck"
 	"github.com/rawnly/gh-targetprocess/cmd/view"
 	"github.com/rawnly/gh-targetprocess/internal"
 	"github.com/rawnly/gh-targetprocess/internal/logging"
@@ -21,10 +22,17 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var (
+	Version = "dev"
+	Commit  = ""
+	Date    = ""
+)
+
 func NewRootCMD() *cobra.Command {
 	var cmd = &cobra.Command{
-		Use:   "gh-targetprocess",
-		Short: "gh-targetprocess is a tool to create PRs starting from a Targetprocess ID or branch",
+		Use:     "gh-targetprocess",
+		Short:   "gh-targetprocess is a tool to create PRs starting from a Targetprocess ID or branch",
+		Version: "",
 		Example: `
   gh targetprocess --assignee @me
   gh targetprocess --base feature/stacked-base
@@ -34,6 +42,9 @@ func NewRootCMD() *cobra.Command {
 		Args:          cobra.MaximumNArgs(1),
 		SilenceErrors: true,
 		SilenceUsage:  true,
+		PersistentPostRun: func(cmd *cobra.Command, args []string) {
+			versioncheck.CheckAndNotify(cmd.Context(), cmd.OutOrStdout(), Version)
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
 
@@ -250,6 +261,9 @@ func NewRootCMD() *cobra.Command {
 			return nil
 		},
 	}
+
+	cmd.SetVersionTemplate(`gh-dash {{printf "version %s\n" .Version}}`)
+	cmd.Version = fmt.Sprintf("%s (%s)", Version, Commit)
 
 	cmd.AddCommand(view.Cmd)
 	cmd.AddCommand(update.Cmd)

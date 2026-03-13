@@ -1,2 +1,4 @@
 /gh-targetprocess.exe
 /gh-targetprocess
+# Added by goreleaser init:
+dist/

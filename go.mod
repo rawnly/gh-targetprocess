@@ -1,8 +1,6 @@
 module github.com/rawnly/gh-targetprocess
 
-go 1.23.0
-
-toolchain go1.24.1
+go 1.25.0
 
 require (
 	github.com/JohannesKaufmann/html-to-markdown/v2 v2.3.2
@@ -13,6 +11,7 @@ require (
 	github.com/spf13/cobra v1.9.1
 	github.com/spf13/viper v1.20.1
 	github.com/zalando/go-keyring v0.2.6
+	golang.org/x/mod v0.34.0
 )
 
 require (
