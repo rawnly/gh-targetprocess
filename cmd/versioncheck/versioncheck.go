@@ -38,6 +38,12 @@ func CheckAndNotify(ctx context.Context, w io.Writer, currentVersion string) {
 	if !utils.IsPiped() {
 		if isOutdated(currentVersion, latestVersion) {
 			fmt.Fprintf(w, "\nA newer version of Satispay CLI is available: %s (current: %s)\nRun '%s' to update.\n", latestVersion, currentVersion, "satispay update")
+
+			if confirm("Do you want to update now?") {
+				if err := utils.AutoUpdate(ctx); err != nil {
+					fmt.Fprintf(w, "\nFailed to auto-update: %s", err.Error())
+				}
+			}
 		}
 	}
 }
@@ -132,4 +138,21 @@ func parseGithubRelease(body []byte) (string, error) {
 	}
 
 	return release.TagName, nil
+}
+
+func confirm(prompt string) bool {
+	for {
+		fmt.Printf("%s (Y/n): ", prompt)
+		var input string
+		fmt.Scanln(&input)
+		input = strings.TrimSpace(strings.ToLower(input))
+		switch input {
+		case "n", "no":
+			return false
+		case "", "y", "yes":
+			return true
+		default:
+			fmt.Println("Please enter Y or N")
+		}
+	}
 }
