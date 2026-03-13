@@ -262,7 +262,7 @@ func NewRootCMD() *cobra.Command {
 		},
 	}
 
-	cmd.SetVersionTemplate(`gh-dash {{printf "version %s\n" .Version}}`)
+	cmd.SetVersionTemplate(`gh-targetprocess {{printf "version %s\n" .Version}}`)
 	cmd.Version = fmt.Sprintf("%s (%s)", Version, Commit)
 
 	cmd.AddCommand(view.Cmd)
