@@ -81,12 +81,16 @@ func Reset() error {
 }
 
 func MigrateConfig() (bool, error) {
+	if err := ensureDir(utils.ConfigDir); err != nil {
+		return false, err
+	}
+
 	legacyConfigFile := path.Join(
 		utils.ExpandPath("~/.config"),
 		"gh-targetprocess.json",
 	)
 
-	newConfigFile := utils.GetConfigFilePath("coc(u)nfig.json")
+	newConfigFile := utils.GetConfigFilePath("config.json")
 
 	_, err := os.Stat(legacyConfigFile)
 
@@ -234,4 +238,20 @@ func InitDefaults() error {
 	viper.Set("web", web)
 
 	return viper.WriteConfig()
+}
+
+func ensureDir(path string) error {
+	p := utils.ExpandPath(path)
+
+	if _, err := os.Stat(p); err != nil {
+		if os.IsNotExist(err) {
+			if err := os.MkdirAll(p, 0700); err != nil {
+				return err
+			}
+		} else {
+			return err
+		}
+	}
+
+	return nil
 }

@@ -17,6 +17,7 @@ import (
 	"github.com/rawnly/gh-targetprocess/cmd/view"
 	"github.com/rawnly/gh-targetprocess/internal"
 	"github.com/rawnly/gh-targetprocess/internal/logging"
+	"github.com/rawnly/gh-targetprocess/internal/telemetry"
 	"github.com/rawnly/gh-targetprocess/internal/utils"
 	"github.com/rawnly/gh-targetprocess/pkg/targetprocess"
 	"github.com/spf13/cobra"
@@ -34,6 +35,8 @@ func NewRootCMD() *cobra.Command {
 		Short:   "gh-targetprocess is a tool to create PRs starting from a Targetprocess ID or branch",
 		Version: "",
 		Example: `
+	gh targetprocess -v
+
   gh targetprocess --assignee @me
   gh targetprocess --base feature/stacked-base
   gh targetprocess --reviewer monalisa,hubot --reviewer myorg/team-name,
@@ -43,6 +46,7 @@ func NewRootCMD() *cobra.Command {
 		SilenceErrors: true,
 		SilenceUsage:  true,
 		PersistentPostRun: func(cmd *cobra.Command, args []string) {
+			telemetry.TrackCommandDetached(cmd, Version)
 			versioncheck.CheckAndNotify(cmd.Context(), cmd.OutOrStdout(), Version)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -270,6 +274,7 @@ func NewRootCMD() *cobra.Command {
 	cmd.AddCommand(configure.Cmd)
 	cmd.AddCommand(NewInitCmd())
 	cmd.AddCommand(comment.NewCommentCommand())
+	cmd.AddCommand(newSendAnalyticsCmd())
 
 	cmd.Flags().BoolP("draft", "d", false, "mark pr as draft")
 	cmd.Flags().BoolP("no-body", "", false, "skip body")
@@ -286,4 +291,17 @@ func NewRootCMD() *cobra.Command {
 	cmd.Flags().BoolP("comment", "c", false, "comment on targetprocess US with the pull-request link")
 
 	return cmd
+}
+
+// newSendAnalyticsCmd creates the hidden command for sending analytics from a detached subprocess.
+// This command is invoked by TrackCommandDetached and should not be called directly by users.
+func newSendAnalyticsCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:    "__send_analytics_event",
+		Hidden: true,
+		Args:   cobra.ExactArgs(1),
+		Run: func(_ *cobra.Command, args []string) {
+			telemetry.SendEvent(args[0])
+		},
+	}
 }
