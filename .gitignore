@@ -2,3 +2,4 @@
 /gh-targetprocess
 # Added by goreleaser init:
 dist/
+.env

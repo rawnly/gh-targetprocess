@@ -8,3 +8,5 @@ cobra-cli = "go:github.com/spf13/cobra-cli"
 [tasks.build]
 run = 'goreleaser build --snapshot --clean'
 
+[env]
+_.file = { path = '.env', redact = true }
