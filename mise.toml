@@ -4,3 +4,7 @@ cobra-cli = "latest"
 
 [tool_alias]
 cobra-cli = "go:github.com/spf13/cobra-cli"
+
+[tasks.build]
+run = 'goreleaser build --snapshot --clean'
+
