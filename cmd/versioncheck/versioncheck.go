@@ -7,12 +7,11 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
-	"path/filepath"
 	"strings"
 	"time"
 
 	"github.com/rawnly/gh-targetprocess/internal/utils"
+	"github.com/spf13/viper"
 	"golang.org/x/mod/semver"
 )
 
@@ -21,12 +20,8 @@ func CheckAndNotify(ctx context.Context, w io.Writer, currentVersion string) {
 		return
 	}
 
-	cache := &VersionCache{}
-	if err := ensureGlobalConfigDir(); err != nil {
-		return
-	}
-
-	if time.Since(cache.LastCheckTime) < checkInterval {
+	lastCheck := viper.GetTime("version-last-check")
+	if time.Since(lastCheck) < checkInterval {
 		return
 	}
 
@@ -35,9 +30,12 @@ func CheckAndNotify(ctx context.Context, w io.Writer, currentVersion string) {
 		return
 	}
 
+	viper.Set("version-last-check", time.Now())
+	_ = viper.WriteConfig()
+
 	if !utils.IsPiped() {
 		if isOutdated(currentVersion, latestVersion) {
-			fmt.Fprintf(w, "\nA newer version of Satispay CLI is available: %s (current: %s)\nRun '%s' to update.\n", latestVersion, currentVersion, "satispay update")
+			fmt.Fprintf(w, "\nA newer version of gh-targetprocess is available: %s (current: %s)\n\nRun '%s' to update.\n\n", latestVersion, currentVersion, "gh-targetprocess update")
 
 			if confirm("Do you want to update now?") {
 				if err := utils.AutoUpdate(ctx); err != nil {
@@ -64,28 +62,6 @@ func isOutdated(current, latest string) bool {
 	return semver.Compare(current, latest) < 0
 }
 
-func ensureGlobalConfigDir() error {
-	configDir, err := globalConfigDirPath()
-	if err != nil {
-		return err
-	}
-
-	if err := os.MkdirAll(configDir, 0o755); err != nil {
-		return fmt.Errorf("creating config directory: %w", err)
-	}
-
-	return nil
-}
-
-func globalConfigDirPath() (string, error) {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return "", fmt.Errorf("getting home directory: %w", err)
-	}
-
-	return filepath.Join(home, globalConfigDirName), nil
-}
-
 func fetchLatestVersion(ctx context.Context) (string, error) {
 	ctx, cancel := context.WithTimeout(ctx, httpTimeout)
 	defer cancel()
@@ -96,7 +72,7 @@ func fetchLatestVersion(ctx context.Context) (string, error) {
 	}
 
 	req.Header.Set("Accept", "application/vnd.github+json")
-	req.Header.Set("User-Agent", "satispay-cli")
+	req.Header.Set("User-Agent", "gh-targetprocess")
 
 	client := &http.Client{}
 	res, err := client.Do(req)

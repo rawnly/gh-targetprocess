@@ -64,9 +64,6 @@ func NewCommentCommand() *cobra.Command {
 				return err
 			}
 
-			httpCtx, cancel := context.WithTimeout(cmd.Context(), time.Second*5)
-			defer cancel()
-
 			var arg0 *string
 			if len(args) > 0 {
 				arg0 = &args[0]
@@ -83,7 +80,7 @@ func NewCommentCommand() *cobra.Command {
 			}
 
 			if !isDryRun {
-				if err := tp.PostComment(httpCtx, comment, assignableID); err != nil {
+				if err := tp.PostComment(cmd.Context(), comment, assignableID); err != nil {
 					return err
 				}
 			}

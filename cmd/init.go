@@ -44,9 +44,7 @@ func NewInitCmd() *cobra.Command {
 			id := utils.ExtractTicketID(&idOrUrl)
 			tp := internal.GetTargetProcess(ctx)
 
-			httpCtx, cancel := context.WithTimeout(ctx, time.Second*5)
-			defer cancel()
-			assignable, err := tp.GetAssignable(httpCtx, *id)
+			assignable, err := tp.GetAssignable(ctx, *id)
 			if err != nil {
 				return err
 			}

@@ -84,10 +84,7 @@ func NewRootCMD() *cobra.Command {
 
 			assignable := targetprocess.Assignable{}
 
-			httpCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
-			defer cancel()
-
-			if err := tp.Get(httpCtx, fmt.Sprintf("/v1/Assignables/%s", *id), &assignable); err != nil {
+			if err := tp.Get(ctx, fmt.Sprintf("/v1/Assignables/%s", *id), &assignable); err != nil {
 				return err
 			}
 

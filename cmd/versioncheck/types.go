@@ -14,7 +14,6 @@ type GHRelease struct {
 var githubAPIURL = "https://api.github.com/repos/rawnly/gh-targetprocess/releases/latest"
 
 const (
-	checkInterval       = 24 * time.Hour
-	httpTimeout         = 2 * time.Second
-	globalConfigDirName = ".config/satispay-cli"
+	checkInterval = 24 * time.Hour
+	httpTimeout   = 2 * time.Second
 )

@@ -42,10 +42,7 @@ var Cmd = &cobra.Command{
 			return errors.New("invalid ticket ID")
 		}
 
-		httpCtx, cancel := context.WithTimeout(ctx, time.Second*5)
-		defer cancel()
-
-		assignable, err := tp.GetAssignable(httpCtx, *id)
+		assignable, err := tp.GetAssignable(ctx, *id)
 		cobra.CheckErr(err)
 
 		if web {
