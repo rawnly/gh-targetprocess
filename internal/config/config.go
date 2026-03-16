@@ -2,6 +2,7 @@ package config
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"io"
 	"os"
@@ -27,7 +28,8 @@ type Config struct {
 	Comment bool `json:"comment"`
 	NoBody  bool `json:"no_body"`
 	/// opens the browser by default
-	Web bool `json:"web"`
+	Web                        bool `json:"web"`
+	DisableAnonymousAnalaytics bool `json:"disable_anonymous_analytics"`
 }
 
 func getUserName() string {
@@ -46,8 +48,9 @@ func Load(ctx context.Context) (*Config, error) {
 	comment := viper.GetBool("comment")
 	noBody := viper.GetBool("no_body")
 	web := viper.GetBool("web")
+	disable_analytics := viper.GetBool("disable_anonymous_analytics")
 
-	return &Config{URL: url, Token: token, Web: web, Comment: comment, NoBody: noBody}, err
+	return &Config{URL: url, Token: token, Web: web, DisableAnonymousAnalaytics: disable_analytics, Comment: comment, NoBody: noBody}, err
 }
 
 func (c *Config) Save() error {
@@ -59,6 +62,7 @@ func (c *Config) Save() error {
 	viper.Set("comment", c.Comment)
 	viper.Set("no_body", c.NoBody)
 	viper.Set("web", c.Web)
+	viper.Set("disable_anonymous_analytics", c.DisableAnonymousAnalaytics)
 
 	return viper.WriteConfig()
 }
@@ -191,11 +195,12 @@ func Init(ctx context.Context) error {
 	}
 
 	config := Config{
-		URL:     baseURL,
-		Token:   token,
-		Comment: viper.GetBool("comment"),
-		NoBody:  viper.GetBool("no_body"),
-		Web:     viper.GetBool("web"),
+		URL:                        baseURL,
+		Token:                      token,
+		Comment:                    viper.GetBool("comment"),
+		NoBody:                     viper.GetBool("no_body"),
+		Web:                        viper.GetBool("web"),
+		DisableAnonymousAnalaytics: viper.GetBool("disable_anonymous_analytics"),
 	}
 
 	if err := config.Save(); err != nil {
@@ -236,6 +241,7 @@ func InitDefaults() error {
 	viper.Set("comment", comment)
 	viper.Set("no_body", !includeBody)
 	viper.Set("web", web)
+	viper.Set("disable_anonymous_analytics", false)
 
 	return viper.WriteConfig()
 }

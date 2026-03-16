@@ -92,6 +92,11 @@ func SendEvent(payloadJson string) {
 		return
 	}
 
+	// allow building without analytics
+	if PostHogAPIKey == "phc_dev_key" {
+		return
+	}
+
 	client, err := posthog.NewWithConfig(PostHogAPIKey, posthog.Config{
 		Endpoint:     PostHogEndpoint,
 		Logger:       silentLogger{},
