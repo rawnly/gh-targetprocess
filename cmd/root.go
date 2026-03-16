@@ -1,12 +1,10 @@
 package cmd
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"regexp"
 	"strings"
-	"time"
 
 	"github.com/charmbracelet/glamour"
 	"github.com/cli/go-gh/v2"
@@ -231,7 +229,7 @@ func NewRootCMD() *cobra.Command {
 				}
 			}
 
-			if err := tp.UpdateState(httpCtx, assignable.ID, targetprocess.EntityStateInTest); err != nil {
+			if err := tp.UpdateState(ctx, assignable.ID, targetprocess.EntityStateInTest); err != nil {
 				return fmt.Errorf("updating entity state: %w", err)
 			}
 

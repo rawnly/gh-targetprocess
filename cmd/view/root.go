@@ -1,10 +1,8 @@
 package view
 
 import (
-	"context"
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/charmbracelet/glamour"
 	"github.com/cli/browser"

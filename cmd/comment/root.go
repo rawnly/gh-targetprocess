@@ -2,13 +2,11 @@ package comment
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"errors"
 	"strconv"
 	"strings"
 	"text/template"
-	"time"
 
 	"github.com/cli/go-gh/v2"
 	"github.com/rawnly/gh-targetprocess/internal"
