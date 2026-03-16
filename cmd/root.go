@@ -1,12 +1,10 @@
 package cmd
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"regexp"
 	"strings"
-	"time"
 
 	"github.com/charmbracelet/glamour"
 	"github.com/cli/go-gh/v2"
@@ -84,10 +82,7 @@ func NewRootCMD() *cobra.Command {
 
 			assignable := targetprocess.Assignable{}
 
-			httpCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
-			defer cancel()
-
-			if err := tp.Get(httpCtx, fmt.Sprintf("/v1/Assignables/%s", *id), &assignable); err != nil {
+			if err := tp.Get(ctx, fmt.Sprintf("/v1/Assignables/%s", *id), &assignable); err != nil {
 				return err
 			}
 
@@ -234,7 +229,7 @@ func NewRootCMD() *cobra.Command {
 				}
 			}
 
-			if err := tp.UpdateState(httpCtx, assignable.ID, targetprocess.EntityStateInTest); err != nil {
+			if err := tp.UpdateState(ctx, assignable.ID, targetprocess.EntityStateInTest); err != nil {
 				return fmt.Errorf("updating entity state: %w", err)
 			}
 

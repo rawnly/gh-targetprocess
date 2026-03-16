@@ -4,13 +4,11 @@ Copyright © 2026 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"os/exec"
 	"regexp"
 	"strings"
-	"time"
 
 	"github.com/rawnly/gh-targetprocess/internal"
 	"github.com/rawnly/gh-targetprocess/internal/logging"
@@ -44,9 +42,7 @@ func NewInitCmd() *cobra.Command {
 			id := utils.ExtractTicketID(&idOrUrl)
 			tp := internal.GetTargetProcess(ctx)
 
-			httpCtx, cancel := context.WithTimeout(ctx, time.Second*5)
-			defer cancel()
-			assignable, err := tp.GetAssignable(httpCtx, *id)
+			assignable, err := tp.GetAssignable(ctx, *id)
 			if err != nil {
 				return err
 			}

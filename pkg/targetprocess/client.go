@@ -7,9 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"os"
-
-	"github.com/rawnly/gh-targetprocess/internal/logging"
+	"time"
 )
 
 type transport struct {
@@ -33,6 +31,7 @@ func (t *transport) RoundTrip(req *http.Request) (*http.Response, error) {
 
 func newHTTPClient() *http.Client {
 	client := &http.Client{
+		Timeout: time.Second * 30,
 		Transport: &transport{
 			headers: map[string]string{
 				"Accept": "application/json",
@@ -151,9 +150,6 @@ func (c *Client) Get(ctx context.Context, path string, response any) error {
 }
 
 func (c *Client) Post(ctx context.Context, path string, body any) error {
-	log := logging.GetLogger(os.Stdout)
-	log("POST", path)
-
 	b, err := json.Marshal(body)
 	if err != nil {
 		return err

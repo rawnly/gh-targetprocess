@@ -1,9 +1,7 @@
 package update
 
 import (
-	"context"
 	"errors"
-	"time"
 
 	"github.com/cli/go-gh/v2"
 	"github.com/rawnly/gh-targetprocess/internal"
@@ -48,10 +46,7 @@ var Cmd = &cobra.Command{
 			return errors.New("invalid ticket ID")
 		}
 
-		httpCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
-		defer cancel()
-
-		assignable, err := tp.GetAssignable(httpCtx, *id)
+		assignable, err := tp.GetAssignable(ctx, *id)
 		if err != nil {
 			return err
 		}
